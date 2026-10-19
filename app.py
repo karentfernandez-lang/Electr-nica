@@ -15,6 +15,14 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+tema = st.sidebar.radio(
+    "Apariencia",
+    ["Claro", "Oscuro"],
+    index=0,
+    horizontal=True,
+    help="Cambia solamente la apariencia de la aplicación.",
+)
+
 st.markdown(
     """
     <style>
@@ -52,6 +60,30 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+if tema == "Claro":
+    st.markdown(
+        """
+        <style>
+        .stApp {background:#f4f7f5; color:#17231f;}
+        [data-testid="stSidebar"] {background:#eaf1ed; border-right:1px solid #c9d8d1;}
+        .hero {border-color:#bfd8cc; background:linear-gradient(120deg,#ffffff,#e6f4ed);}
+        .hero p, .rack-title, .stock {color:#647970;}
+        .hero h1, .product, h1, h2, h3 {color:#16251f;}
+        .status {background:#d9f7e8; color:#087442;}
+        .bin {border-color:#c7d6d0; background:linear-gradient(145deg,#ffffff,#edf3f0);
+              box-shadow:0 6px 16px rgba(28,59,47,.05);}
+        .location {color:#203a30;}
+        .led {background:#a9b9b2;}
+        .order {border-color:#c6d9d0; background:#ffffff;}
+        .command {color:#075f82; background:#e6f3f8;}
+        div[data-testid="stMetric"] {background:#ffffff; border-color:#c9d9d2;}
+        div[data-testid="stChatMessage"] {background:#ffffff; border:1px solid #d7e2dd;
+                                           border-radius:12px;}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 @st.cache_data
@@ -191,15 +223,18 @@ st.markdown(
 )
 
 with st.sidebar:
-    st.header("Configuración")
-    st.caption("Conexión física")
+    st.divider()
+    st.header("1. Conectar Arduino")
+    st.caption("Conectá la placa por USB y elegí el puerto que aparezca, por ejemplo COM3.")
     puertos = listar_puertos()
     opciones = ["Modo simulación"] + puertos
     puerto = st.selectbox("Puerto de Arduino", opciones)
     velocidad = st.selectbox("Velocidad", [9600, 115200], index=0)
 
     if not st.session_state.arduino.conectado:
-        if st.button("Conectar Arduino", use_container_width=True, disabled=puerto == "Modo simulación"):
+        if puerto == "Modo simulación":
+            st.warning("Arduino no detectado: la aplicación está simulando la estantería.")
+        if st.button("🔌 Conectar Arduino", type="primary", use_container_width=True, disabled=puerto == "Modo simulación"):
             try:
                 st.session_state.arduino.conectar(puerto, velocidad)
                 registrar("Arduino conectado", puerto)
@@ -214,6 +249,7 @@ with st.sidebar:
             st.rerun()
 
     st.divider()
+    st.subheader("2. Estado de la IA")
     clave_configurada = bool(os.getenv("OPENAI_API_KEY", ""))
     try:
         clave_configurada = clave_configurada or bool(st.secrets.get("OPENAI_API_KEY", ""))

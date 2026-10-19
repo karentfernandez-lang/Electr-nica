@@ -12,6 +12,7 @@ Prototipo de un sistema Pick to Light asistido por inteligencia artificial para 
 - Arduino controla NeoPixel, LCD, piezo y pulsador.
 - Registra operaciones y permite exportar el historial.
 - Funciona en modo simulación sin Arduino.
+- Permite elegir entre tema claro y oscuro; el tema claro aparece por defecto.
 - Puede usar una API de IA externa o continuar con interpretación local si no hay internet.
 
 ## Ejecutar en la computadora
