@@ -14,7 +14,7 @@ def listar_puertos():
     return [puerto.device for puerto in list_ports.comports()]
 
 
-class ConexionArduino:
+class ConexionESP32:
     def __init__(self):
         self._serial = None
         self.puerto = None
@@ -23,7 +23,7 @@ class ConexionArduino:
     def conectado(self):
         return self._serial is not None and self._serial.is_open
 
-    def conectar(self, puerto, velocidad=9600):
+    def conectar(self, puerto, velocidad=115200):
         if serial is None:
             raise RuntimeError("La librería pyserial no está instalada.")
         self.desconectar()
@@ -34,7 +34,7 @@ class ConexionArduino:
 
     def enviar(self, comando):
         if not self.conectado:
-            raise RuntimeError("Arduino no está conectado.")
+            raise RuntimeError("La ESP32 no está conectada.")
         self._serial.write((comando.strip() + "\n").encode("utf-8"))
         self._serial.flush()
 

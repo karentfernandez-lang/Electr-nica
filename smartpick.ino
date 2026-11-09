@@ -2,10 +2,13 @@
 #include <LiquidCrystal_I2C.h>
 #include <Adafruit_NeoPixel.h>
 
-const int PIN_NEOPIXEL = 6;
+// Conexiones para ESP32 DevKit V1.
+const int PIN_NEOPIXEL = 18;
 const int CANTIDAD_LED = 11;
-const int PIN_BOTON = 2;
-const int PIN_PIEZO = 9;
+const int PIN_BOTON = 4;
+const int PIN_PIEZO = 19;
+const int PIN_SDA_LCD = 21;
+const int PIN_SCL_LCD = 22;
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 Adafruit_NeoPixel tira(CANTIDAD_LED, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
@@ -17,7 +20,7 @@ int cantidadActiva = 0;
 bool ordenActiva = false;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(PIN_BOTON, INPUT_PULLUP);
   pinMode(PIN_PIEZO, OUTPUT);
 
@@ -25,6 +28,7 @@ void setup() {
   tira.setBrightness(45);
   apagarLuces();
 
+  Wire.begin(PIN_SDA_LCD, PIN_SCL_LCD);
   lcd.init();
   lcd.backlight();
   mostrarEspera();

@@ -5,7 +5,10 @@ import pandas as pd
 import streamlit as st
 
 from asistente import interpretar_solicitud
-from conexion_arduino import ConexionArduino, listar_puertos
+from conexion_arduino import ConexionESP32, listar_puertos
+
+
+CATALOGO_VERSION = "smartpick-etiquetas-v2"
 
 
 st.set_page_config(
@@ -86,14 +89,17 @@ if tema == "Claro":
     )
 
 
-@st.cache_data
 def cargar_catalogo():
     return pd.read_csv("catalogo.csv", dtype={"sku": str})
 
 
 def iniciar_estado():
-    if "catalogo" not in st.session_state:
+    # La versión evita que Streamlit conserve el catálogo anterior en una sesión abierta.
+    if st.session_state.get("catalogo_version") != CATALOGO_VERSION:
         st.session_state.catalogo = cargar_catalogo()
+        st.session_state.catalogo_version = CATALOGO_VERSION
+        st.session_state.orden = None
+        st.session_state.error = None
     if "orden" not in st.session_state:
         st.session_state.orden = None
     if "error" not in st.session_state:
@@ -104,8 +110,8 @@ def iniciar_estado():
         st.session_state.mensajes = [
             {"role": "assistant", "content": "Hola. Decime qué producto necesitás y cuántas unidades."}
         ]
-    if "arduino" not in st.session_state:
-        st.session_state.arduino = ConexionArduino()
+    if "esp32" not in st.session_state:
+        st.session_state.esp32 = ConexionESP32()
 
 
 def registrar(evento, detalle):
@@ -119,21 +125,21 @@ def registrar(evento, detalle):
     )
 
 
-def enviar_arduino(comando):
-    if st.session_state.arduino.conectado:
+def enviar_esp32(comando):
+    if st.session_state.esp32.conectado:
         try:
-            st.session_state.arduino.enviar(comando)
+            st.session_state.esp32.enviar(comando)
             return True
         except Exception as exc:
             registrar("Error de conexión", str(exc))
-            st.session_state.arduino.desconectar()
+            st.session_state.esp32.desconectar()
     return False
 
 
 def activar_error(mensaje):
     st.session_state.orden = None
     st.session_state.error = mensaje
-    enviar_arduino("ERROR|BUZZER|RED")
+    enviar_esp32("ERROR|BUZZER|RED")
     registrar("Solicitud rechazada", mensaje)
 
 
@@ -182,7 +188,7 @@ def procesar_pedido(texto):
         "comando": comando,
         "metodo": resultado.get("metodo", "local"),
     }
-    enviar_arduino(comando)
+    enviar_esp32(comando)
     registrar("Orden preparada", f"{cantidad} × {producto['producto']} — {producto['ubicacion']}")
     mensaje = (
         f"Encontré {producto['producto']}. Está en {producto['ubicacion']}. "
@@ -197,7 +203,7 @@ def confirmar_orden():
         return
     mascara = st.session_state.catalogo["sku"] == orden["sku"]
     st.session_state.catalogo.loc[mascara, "stock"] -= orden["cantidad"]
-    enviar_arduino(f"CONFIRM|{orden['ubicacion']}|{orden['sku']}|{orden['cantidad']}")
+    enviar_esp32(f"CONFIRM|{orden['ubicacion']}|{orden['sku']}|{orden['cantidad']}")
     registrar("Picking confirmado", f"{orden['cantidad']} × {orden['producto']}")
     st.session_state.mensajes.append(
         {
@@ -224,28 +230,28 @@ st.markdown(
 
 with st.sidebar:
     st.divider()
-    st.header("1. Conectar Arduino")
-    st.caption("Conectá la placa por USB y elegí el puerto que aparezca, por ejemplo COM3.")
+    st.header("1. Conectar ESP32")
+    st.caption("Conectá la ESP32 por USB y elegí el puerto que aparezca, por ejemplo COM3.")
     puertos = listar_puertos()
     opciones = ["Modo simulación"] + puertos
-    puerto = st.selectbox("Puerto de Arduino", opciones)
-    velocidad = st.selectbox("Velocidad", [9600, 115200], index=0)
+    puerto = st.selectbox("Puerto de la ESP32", opciones)
+    velocidad = st.selectbox("Velocidad", [115200, 9600], index=0)
 
-    if not st.session_state.arduino.conectado:
+    if not st.session_state.esp32.conectado:
         if puerto == "Modo simulación":
-            st.warning("Arduino no detectado: la aplicación está simulando la estantería.")
-        if st.button("🔌 Conectar Arduino", type="primary", use_container_width=True, disabled=puerto == "Modo simulación"):
+            st.warning("ESP32 no detectada: la aplicación está simulando la estantería.")
+        if st.button("🔌 Conectar ESP32", type="primary", use_container_width=True, disabled=puerto == "Modo simulación"):
             try:
-                st.session_state.arduino.conectar(puerto, velocidad)
-                registrar("Arduino conectado", puerto)
+                st.session_state.esp32.conectar(puerto, velocidad)
+                registrar("ESP32 conectada", puerto)
                 st.rerun()
             except Exception as exc:
                 st.error(f"No fue posible conectar: {exc}")
     else:
-        st.success(f"Conectado en {st.session_state.arduino.puerto}")
+        st.success(f"ESP32 conectada en {st.session_state.esp32.puerto}")
         if st.button("Desconectar", use_container_width=True):
-            st.session_state.arduino.desconectar()
-            registrar("Arduino desconectado", "Modo simulación")
+            st.session_state.esp32.desconectar()
+            registrar("ESP32 desconectada", "Modo simulación")
             st.rerun()
 
     st.divider()
@@ -270,7 +276,7 @@ with st.sidebar:
         st.session_state.mensajes = [
             {"role": "assistant", "content": "Demostración restaurada. ¿Qué producto necesitás?"}
         ]
-        enviar_arduino("RESET")
+        enviar_esp32("RESET")
         st.rerun()
 
 col_chat, col_mapa, col_estado = st.columns([1.02, 1.35, 0.8], gap="large")
@@ -348,21 +354,21 @@ with col_mapa:
                 st.rerun()
         with cancelar:
             if st.button("Cancelar", use_container_width=True):
-                enviar_arduino("CANCEL")
+                enviar_esp32("CANCEL")
                 registrar("Orden cancelada", orden["producto"])
                 st.session_state.orden = None
                 st.rerun()
     elif st.session_state.error:
         st.error(st.session_state.error)
         if st.button("Limpiar alarma", use_container_width=True):
-            enviar_arduino("RESET")
+            enviar_esp32("RESET")
             st.session_state.error = None
             st.rerun()
     else:
         st.info("Esperando una solicitud del operario.")
 
 with col_estado:
-    st.subheader("Salida Arduino")
+    st.subheader("Salida ESP32")
     if st.session_state.orden:
         orden = st.session_state.orden
         linea_1 = f"{orden['ubicacion']} {orden['producto']}"[:16].upper().ljust(16)

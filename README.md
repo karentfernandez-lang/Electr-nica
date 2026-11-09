@@ -8,10 +8,10 @@ Prototipo de un sistema Pick to Light asistido por inteligencia artificial para 
 - La aplicación identifica producto y cantidad.
 - Consulta SKU, stock y ubicación.
 - Señala fila, columna y ubicación exacta.
-- Genera un comando para Arduino.
-- Arduino controla NeoPixel, LCD, piezo y pulsador.
+- Genera un comando para la ESP32.
+- La ESP32 controla NeoPixel, LCD, piezo y pulsador.
 - Registra operaciones y permite exportar el historial.
-- Funciona en modo simulación sin Arduino.
+- Funciona en modo simulación sin la ESP32.
 - Permite elegir entre tema claro y oscuro; el tema claro aparece por defecto.
 - Puede usar una API de IA externa o continuar con interpretación local si no hay internet.
 
@@ -33,14 +33,18 @@ streamlit run app.py
 
 5. Abrir la dirección indicada por Streamlit, normalmente `http://localhost:8501`.
 
-## Conectar Arduino
+## Conectar la ESP32
 
-1. Instalar en Arduino IDE las librerías `Adafruit NeoPixel` y `LiquidCrystal I2C`.
-2. Abrir `codigo_arduino/smartpick.ino`.
-3. Cargar el programa al Arduino UNO.
-4. Cerrar el Monitor Serial del Arduino IDE.
-5. Ejecutar Streamlit y seleccionar el puerto correspondiente.
-6. Presionar **Conectar Arduino**.
+1. Instalar el soporte para placas ESP32 en Arduino IDE y seleccionar `ESP32 Dev Module`.
+2. Instalar las librerías `Adafruit NeoPixel` y `LiquidCrystal I2C`.
+3. Abrir `codigo_arduino/smartpick.ino`.
+4. Cargar el programa a la ESP32.
+5. Cerrar el Monitor Serial del Arduino IDE.
+6. Ejecutar Streamlit y seleccionar el puerto correspondiente a 115200 baudios.
+7. Presionar **Conectar ESP32**.
+
+Pines utilizados en la ESP32: NeoPixel GPIO 18, pulsador GPIO 4, piezo GPIO 19,
+LCD I2C SDA GPIO 21 y SCL GPIO 22.
 
 ## Activar IA externa
 
@@ -54,11 +58,11 @@ También puede configurarse la variable de entorno `OPENAI_API_KEY` y, opcionalm
 
 ## Publicar en Streamlit Community Cloud
 
-Subir la carpeta a un repositorio de GitHub y seleccionar `app.py` como archivo principal. La versión publicada funciona en modo simulación. Para comunicarse con un Arduino por USB, ejecutar la aplicación localmente en la computadora conectada a la placa.
+Subir la carpeta a un repositorio de GitHub y seleccionar `app.py` como archivo principal. La versión publicada funciona en modo simulación. Para comunicarse con una ESP32 por USB, ejecutar la aplicación localmente en la computadora conectada a la placa.
 
 ## Protocolo de comunicación
 
-Ejemplo de orden enviada a Arduino:
+Ejemplo de orden enviada a la ESP32:
 
 ```text
 PICK|B2|202|3
