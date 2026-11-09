@@ -67,8 +67,9 @@ def interpretar_local(texto, catalogo):
         mejor_producto["producto"],
         *str(mejor_producto["sinonimos"]).split("|"),
     ]
-    # Se retiran modelo, amperaje y nombre del artículo antes de buscar la cantidad.
-    # Así, "cuatro fusibles de 10 amperios" se interpreta como 4 y no como 10.
+    # Se retiran el código, los sinónimos y el nombre del artículo antes de
+    # buscar la cantidad. Así, un número perteneciente al producto no se
+    # confunde con la cantidad solicitada.
     for termino in sorted(terminos_producto, key=len, reverse=True):
         texto_cantidad = texto_cantidad.replace(normalizar(termino), " ")
 

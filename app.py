@@ -283,7 +283,7 @@ with col_chat:
             with st.chat_message(mensaje["role"]):
                 st.write(mensaje["content"])
 
-    texto = st.chat_input("Ej.: Necesito 3 rulemanes 6204")
+    texto = st.chat_input("Ej.: Necesito 3 tacos Fischer")
     if texto:
         st.session_state.mensajes.append({"role": "user", "content": texto})
         respuesta, es_error = procesar_pedido(texto)
@@ -293,9 +293,9 @@ with col_chat:
     st.caption("Ejemplos rápidos")
     ej1, ej2, ej3 = st.columns(3)
     ejemplos = [
-        (ej1, "3 rulemanes", "Necesito 3 rulemanes 6204"),
-        (ej2, "4 fusibles", "Buscame cuatro fusibles de 10 amperios"),
-        (ej3, "8 tornillos", "Quiero 8 tornillos M8"),
+        (ej1, "3 tacos Fischer", "Necesito 3 tacos Fischer"),
+        (ej2, "4 clavos", "Buscame cuatro clavos"),
+        (ej3, "8 tornillos", "Quiero 8 tornillos"),
     ]
     for columna, etiqueta, pedido in ejemplos:
         with columna:

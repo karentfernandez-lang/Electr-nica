@@ -1,8 +1,8 @@
 sku,producto,ubicacion,stock,sinonimos
-101,Tornillos M8,A1,120,tornillo|tornillos|bulon|bulones|m8
-102,Tuercas M8,A2,95,tuerca|tuercas
-103,Arandelas M8,A3,180,arandela|arandelas
-201,Fusible 10 A,B1,42,fusible|fusibles|10 amperios|10a
-202,Rulemán 6204,B2,28,ruleman|rulemán|rulemanes|rodamiento|6204
-203,Mecha 8 mm,B3,36,mecha|mechas|broca|brocas|8mm|8 mm
+101,Tornillos,A1,120,tornillo|tornillos|bulon|bulones|tornilleria
+102,Tuercas,A2,95,tuerca|tuercas
+103,Arandelas,A3,180,arandela|arandelas
+201,Clavos,B1,100,clavo|clavos
+202,Tacos Fischer,B2,60,taco|tacos|taco fischer|tacos fischer|fischer|tarugo|tarugos
+203,Rulemanes,B3,28,ruleman|rulemán|rulemanes|rodamiento|rodamientos
 
