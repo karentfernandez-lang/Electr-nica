@@ -1,5 +1,2 @@
-streamlit>=1.39
-pandas>=2.0
-pyserial>=3.5
-openai>=1.0
-
+streamlit>=1.39,<2
+pyserial>=3.5,<4
