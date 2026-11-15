@@ -115,20 +115,22 @@ estado_led = "on" if conectado else "off"
 etiqueta = f"En línea · {uno.port}" if conectado else ("En pausa" if st.session_state.pausa_usb else "Buscando Arduino")
 st.markdown("""
 <style>
-.stApp {background:#0b1217;color:#e4eff0;}
 .block-container {max-width:960px;padding-top:2.7rem;}
-.sp-hero {padding:1.9rem 2rem;background:linear-gradient(125deg,#162730,#101c21);
-  border:1px solid #29414a;border-radius:22px;margin-bottom:1.7rem;color:#e8f6fa;}
-.sp-kicker {color:#9cc0c7;font-size:.72rem;font-weight:700;letter-spacing:.22em;}
+.sp-hero {padding:1.9rem 2rem;background:linear-gradient(125deg,
+  color-mix(in srgb, #38b78c 16%, var(--background-color)),var(--secondary-background-color));
+  border:1px solid color-mix(in srgb,var(--text-color) 18%,transparent);
+  border-radius:22px;margin-bottom:1.7rem;color:var(--text-color);}
+.sp-kicker {opacity:.8;font-size:.72rem;font-weight:700;letter-spacing:.22em;}
 .sp-brand {font-size:clamp(2rem,6vw,3.6rem);font-weight:850;letter-spacing:-.055em;}
 .sp-ia {display:inline-block;font-size:.56em;letter-spacing:.01em;vertical-align:middle;
   color:#a2b5b8;background:#25353b;border:1px solid #486067;border-radius:.45em;padding:.04em .39em;}
 .sp-ia.on {color:#d2ffe6;background:#245b40;border-color:#96ffbb;
   text-shadow:0 0 8px #a5ffc5;box-shadow:0 0 16px #74ffac68,inset 0 0 7px #74ffac42;}
-.sp-state {font-size:.83rem;color:#b4ccd0;}
+.sp-state {font-size:.83rem;opacity:.8;}
 .sp-card {padding:.9rem 1rem;margin-bottom:.65rem;min-height:86px;border-radius:13px;
-  border:1px solid #29414a;background:#142129;color:#e8f6fa;}
-.sp-code {font-weight:800;color:#9dd8e5;font-size:.78rem;letter-spacing:.12em;}
+  border:1px solid color-mix(in srgb,var(--text-color) 15%,transparent);
+  background:var(--secondary-background-color);color:var(--text-color);}
+.sp-code {font-weight:800;font-size:.78rem;letter-spacing:.12em;opacity:.8;}
 </style>
 """, unsafe_allow_html=True)
 st.markdown(
@@ -138,6 +140,7 @@ st.markdown(
 )
 with st.sidebar:
     st.header("Arduino Uno")
+    st.caption("Tema claro por defecto. Para cambiarlo: ⋮ → Settings → Theme.")
     if st.session_state.aviso_usb:
         st.warning(st.session_state.aviso_usb)
     if conectado:
