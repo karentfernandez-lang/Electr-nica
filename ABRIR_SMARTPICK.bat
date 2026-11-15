@@ -10,7 +10,7 @@ if not exist ".venv\Scripts\python.exe" (
     pause
     exit /b 1
 )
-".venv\Scripts\python.exe" -c "import streamlit, serial; assert hasattr(streamlit, 'fragment')"
+".venv\Scripts\python.exe" -c "import streamlit, serial, xlsxwriter; assert hasattr(streamlit, 'fragment')"
 if errorlevel 1 (
     ".venv\Scripts\python.exe" -m pip install -r requirements.txt
     if errorlevel 1 (

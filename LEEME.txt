@@ -1,17 +1,20 @@
 SMARTPICK IA - DEMOSTRACION CON ARDUINO UNO
 
 1. Extrae todo el ZIP. No ejecutes el lanzador desde el ZIP.
-2. Enchufa el Uno por USB a la laptop y cierra el Monitor Serie.
+2. Enchufa el Uno por USB. Carga el .ino de este ZIP antes de usar la pagina
+   y luego cierra el Monitor Serie.
 3. Doble clic en ABRIR_SMARTPICK.bat. Se requiere Python 3.
    El primer arranque instala dependencias y necesita internet.
    En los siguientes arranques la app funciona localmente sin internet.
 4. Elige el puerto COM del Uno y pulsa Conectar. Usa 9600 baudios.
 5. Envia tacos 5. Debe iluminarse A2 y el LCD debe mostrar el retiro.
    Pulsa el boton fisico: si arrancaste con 8 tacos, quedan 3.
-   Tras 10 segundos, prueba clavos 3 para B2.
+   Prueba clavos 3 para B2 sin esperar. El saldo queda 2 segundos en el LCD,
+   o se borra antes con otro pedido valido o una nueva pulsacion.
+6. En la pagina, pulsa Descargar Excel de stock. Incluye las seis gavetas
+   y el saldo reportado por el Uno. Descargalo antes de apagar o desconectar.
 
-Si el Uno ya tiene la version final (B2 Clavos, 9600 baudios),
-no hace falta volver a cargarla. Si no, abre:
+Para cargar la version compatible con esta pagina, abre:
   Arduino/SmartPick_Uno/SmartPick_Uno.ino
 Selecciona Arduino Uno y su puerto en Arduino IDE. El sketch usa
 las bibliotecas hd44780 y Adafruit NeoPixel. Tras cargarlo, cierra

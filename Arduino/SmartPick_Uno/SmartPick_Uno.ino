@@ -8,7 +8,7 @@
 
 const byte PIN_BOTON = 2, PIN_LED = 6, PIN_BUZZER = 8;
 const unsigned long DURACION_ALARMA = 5000UL;
-const unsigned long DURACION_CONFIRMACION = 10000UL;
+const unsigned long DURACION_CONFIRMACION = 2000UL;
 hd44780_I2Cexp lcd;
 Adafruit_NeoPixel tira(60, PIN_LED, NEO_GRB + NEO_KHZ800);
 
@@ -89,11 +89,23 @@ int buscar(const char* n) {
       !strcmp(n,"rulemanes")) return 5;
   return -1;
 }
+void publicarStock() {
+  Serial.print(F("STOCK"));
+  for (byte i = 0; i < sizeof(gavetas) / sizeof(gavetas[0]); i++) {
+    Serial.print('|');
+    Serial.print(gavetas[i].stock);
+  }
+  Serial.println();
+}
 void procesar(char* texto) {
   while (*texto == ' ') texto++;
   if (!*texto) return;
-  if (confirmacionActiva) {
-    Serial.println(F("Espera a que el LCD diga Esperando pedido."));
+  if (!strcmp(texto, "PING_SMARTPICK")) {
+    Serial.println(F("SMARTPICK_OK"));
+    return;
+  }
+  if (!strcmp(texto, "STOCK_SMARTPICK")) {
+    publicarStock();
     return;
   }
   char* fin = texto + strlen(texto);
@@ -128,6 +140,7 @@ void procesar(char* texto) {
     return;
   }
   detenerAlarma();
+  confirmacionActiva = false;
   pendiente = indice;
   cantidadPendiente = cantidad;
   encenderGaveta(indice);
@@ -161,7 +174,14 @@ void leerBoton() {
   }
   if (lectura == botonEstable || millis() - cambioBoton < 30) return;
   botonEstable = lectura;
-  if (botonEstable != LOW || pendiente < 0) return;
+  if (botonEstable != LOW) return;
+  if (pendiente < 0) {
+    if (confirmacionActiva) {
+      confirmacionActiva = false;
+      mostrarEspera();
+    }
+    return;
+  }
   gavetas[pendiente].stock -= cantidadPendiente;
   int quedan = gavetas[pendiente].stock;
   pendiente = -1;
@@ -175,6 +195,7 @@ void leerBoton() {
   confirmacionActiva = true;
   Serial.print(F("Producto confirmado. En stock: "));
   Serial.println(quedan);
+  publicarStock();
 }
 
 void setup() {
