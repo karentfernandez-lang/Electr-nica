@@ -12,8 +12,6 @@ GAVETAS = {
 }
 
 st.set_page_config(page_title="SmartPick IA | Arduino Uno", layout="centered")
-st.title("SmartPick IA")
-st.caption("Preparación de pedidos · Arduino Uno por USB")
 st.session_state.setdefault("uno", None)
 st.session_state.setdefault("buffer", b"")
 st.session_state.setdefault("historial", [])
@@ -81,6 +79,10 @@ def registrar(mensaje):
 
 uno = st.session_state.uno
 conectado = uno is not None and uno.is_open
+color_ia = "#16a34a" if conectado else "inherit"
+st.markdown(f'<h1>SmartPick <span style="color:{color_ia}">IA</span></h1>',
+            unsafe_allow_html=True)
+st.caption("Preparación de pedidos · Arduino Uno por USB")
 puertos = [p.device for p in list_ports.comports()]
 with st.sidebar:
     st.header("Arduino Uno")
@@ -116,7 +118,9 @@ st.subheader("Gavetas")
 columnas = st.columns(3)
 for i, (ubicacion, producto) in enumerate(GAVETAS.items()):
     with columnas[i % 3]:
-        st.markdown(f"**{ubicacion}** · {producto}")
+        with st.container(border=True):
+            st.markdown(f"**{ubicacion}**")
+            st.write(producto)
 
 with st.form("pedido", clear_on_submit=True):
     pedido = st.text_input("Producto y cantidad", placeholder="Ej.: tacos 5")
@@ -168,7 +172,7 @@ def mostrar_estado():
             st.session_state.buffer = b""
     if st.session_state.historial:
         ultimo = st.session_state.historial[-1]
-        if ultimo.startswith(("SIN STOCK", "Producto no existe")):
+        if ultimo.startswith(("SIN STOCK", "ERROR", "Producto no existe")):
             st.error(ultimo)
         elif ultimo != st.session_state.confirmacion:
             st.info(ultimo)
