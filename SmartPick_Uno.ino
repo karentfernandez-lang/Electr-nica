@@ -29,6 +29,8 @@ Gaveta gavetas[] = {
 
 bool lcdListo = false, alarmaActiva = false, confirmacionActiva = false;
 bool barrido = false, vistaConfirmar = false;
+int gavetaAgotada = -1;
+bool rojoVisible = false;
 byte pasoAnterior = 0;
 unsigned long duracionAlarma = 0, inicioVista = 0;
 int pendiente = -1, cantidadPendiente = 0;
@@ -60,6 +62,7 @@ void detenerAlarma() {
   noTone(PIN_BUZZER);
   alarmaActiva = false;
   barrido = false;
+  gavetaAgotada = -1;
 }
 void encenderGaveta(int indice, uint32_t color) {
   const Gaveta& g = gavetas[indice];
@@ -126,6 +129,10 @@ void procesar(char* texto) {
   }
   if (!strcmp(texto, "STOCK_SMARTPICK")) {
     publicarStock();
+    return;
+  }
+  if (gavetaAgotada >= 0) {
+    Serial.println(F("Pulsa el boton o espera a que termine el aviso."));
     return;
   }
   char* fin = texto + strlen(texto);
@@ -202,17 +209,29 @@ void leerBoton() {
     if (confirmacionActiva || alarmaActiva) limpiarAviso();
     return;
   }
-  gavetas[pendiente].stock -= cantidadPendiente;
-  int quedan = gavetas[pendiente].stock;
+  int retirada = pendiente;
+  gavetas[retirada].stock -= cantidadPendiente;
+  int quedan = gavetas[retirada].stock;
   pendiente = -1;
   cantidadPendiente = 0;
   detenerAlarma();
   tira.clear(); tira.show();
   char mensaje[17];
   snprintf(mensaje, sizeof(mensaje), "En stock: %d", quedan);
-  mostrar("Retiro validado", mensaje);
-  inicioConfirmacion = millis();
-  confirmacionActiva = true;
+  if (quedan == 0) {
+    mostrar("SIN STOCK", "Quedan: 0");
+    gavetaAgotada = retirada;
+    rojoVisible = true;
+    encenderGaveta(retirada, tira.Color(40, 0, 0));
+    duracionAlarma = 10000UL;
+    inicioAlarma = millis();
+    alarmaActiva = true;
+    tone(PIN_BUZZER, 1500, 2000UL);
+  } else {
+    mostrar("Retiro validado", mensaje);
+    inicioConfirmacion = millis();
+    confirmacionActiva = true;
+  }
   Serial.print(F("Producto confirmado. En stock: "));
   Serial.println(quedan);
   publicarStock();
@@ -241,6 +260,14 @@ void loop() {
   if (alarmaActiva) {
     unsigned long transcurrido = millis() - inicioAlarma;
     if (transcurrido >= duracionAlarma) limpiarAviso();
+    else if (gavetaAgotada >= 0) {
+      bool visible = (transcurrido / 250UL) % 2 == 0;
+      if (visible != rojoVisible) {
+        rojoVisible = visible;
+        if (visible) encenderGaveta(gavetaAgotada, tira.Color(40, 0, 0));
+        else { tira.clear(); tira.show(); }
+      }
+    }
     else if (barrido) {
       unsigned long paso = transcurrido / PASO_BARRIDO;
       const byte total = sizeof(gavetas) / sizeof(gavetas[0]);

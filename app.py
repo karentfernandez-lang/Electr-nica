@@ -1,5 +1,6 @@
 import time
 from io import BytesIO
+from html import escape
 
 import serial
 import streamlit as st
@@ -18,6 +19,8 @@ st.session_state.setdefault("historial", [])
 st.session_state.setdefault("confirmacion", "")
 st.session_state.setdefault("stock", None)
 st.session_state.setdefault("aviso_usb", "")
+st.session_state.setdefault("pausa_usb", False)
+st.session_state.setdefault("reintentar_usb", 0.0)
 
 
 def conectar(puerto):
@@ -77,50 +80,88 @@ def registrar(mensaje):
     st.session_state.historial = (st.session_state.historial + [mensaje])[-20:]
 
 
+def puertos_uno(lista):
+    compatibles = {0x2341, 0x2A03, 0x1A86, 0x0403, 0x10C4}
+    return [
+        p.device for p in lista
+        if p.vid in compatibles or "arduino" in (p.description or "").lower()
+        or p.device.upper() == "COM9"
+    ]
+
+
+dispositivos = list(list_ports.comports())
+puertos = [p.device for p in dispositivos]
+candidatos = puertos_uno(dispositivos)
+if (
+    st.session_state.uno is None and candidatos and not st.session_state.pausa_usb
+    and time.monotonic() >= st.session_state.reintentar_usb
+):
+    for puerto in candidatos:
+        try:
+            st.session_state.uno = conectar(puerto)
+        except (serial.SerialException, OSError) as error:
+            st.session_state.aviso_usb = f"{puerto}: {error}"
+        else:
+            st.session_state.buffer = b""
+            st.session_state.historial = []
+            st.session_state.confirmacion = ""
+            st.session_state.aviso_usb = ""
+            break
+    st.session_state.reintentar_usb = time.monotonic() + 12
+
 uno = st.session_state.uno
 conectado = uno is not None and uno.is_open
-color_ia = "#16a34a" if conectado else "inherit"
-st.markdown(f'<h1>SmartPick <span style="color:{color_ia}">IA</span></h1>',
-            unsafe_allow_html=True)
-st.caption("Preparación de pedidos · Arduino Uno por USB")
-puertos = [p.device for p in list_ports.comports()]
+estado_led = "on" if conectado else "off"
+etiqueta = f"En línea · {uno.port}" if conectado else ("En pausa" if st.session_state.pausa_usb else "Buscando Arduino")
+st.markdown("""
+<style>
+.stApp {background:#0b1217;color:#e4eff0;}
+.block-container {max-width:960px;padding-top:2.7rem;}
+.sp-hero {padding:1.9rem 2rem;background:linear-gradient(125deg,#162730,#101c21);
+  border:1px solid #29414a;border-radius:22px;margin-bottom:1.7rem;color:#e8f6fa;}
+.sp-kicker {color:#9cc0c7;font-size:.72rem;font-weight:700;letter-spacing:.22em;}
+.sp-brand {font-size:clamp(2rem,6vw,3.6rem);font-weight:850;letter-spacing:-.055em;}
+.sp-ia {display:inline-block;font-size:.56em;letter-spacing:.01em;vertical-align:middle;
+  color:#a2b5b8;background:#25353b;border:1px solid #486067;border-radius:.45em;padding:.04em .39em;}
+.sp-ia.on {color:#d2ffe6;background:#245b40;border-color:#96ffbb;
+  text-shadow:0 0 8px #a5ffc5;box-shadow:0 0 16px #74ffac68,inset 0 0 7px #74ffac42;}
+.sp-state {font-size:.83rem;color:#b4ccd0;}
+.sp-card {padding:.9rem 1rem;margin-bottom:.65rem;min-height:86px;border-radius:13px;
+  border:1px solid #29414a;background:#142129;color:#e8f6fa;}
+.sp-code {font-weight:800;color:#9dd8e5;font-size:.78rem;letter-spacing:.12em;}
+</style>
+""", unsafe_allow_html=True)
+st.markdown(
+    f'<div class="sp-hero"><div class="sp-kicker">PICK-TO-LIGHT · MÓDULO 01</div>'
+    f'<div class="sp-brand">SmartPick <span class="sp-ia {estado_led}">IA</span></div>'
+    f'<div class="sp-state">{escape(etiqueta)}</div></div>', unsafe_allow_html=True
+)
 with st.sidebar:
     st.header("Arduino Uno")
     if st.session_state.aviso_usb:
         st.warning(st.session_state.aviso_usb)
     if conectado:
-        st.success(f"Arduino conectado · {uno.port}")
+        st.caption(f"Puerto USB · {uno.port}")
         if st.button("Desconectar"):
             cerrar_placa()
+            st.session_state.pausa_usb = True
+            st.rerun()
+    elif st.session_state.pausa_usb:
+        if st.button("Reanudar búsqueda"):
+            st.session_state.pausa_usb = False
+            st.session_state.reintentar_usb = 0.0
             st.rerun()
     else:
-        if puertos:
-            st.warning("Puerto disponible. Elegí el COM del Uno y conectá.")
-            puerto = st.selectbox("Puerto USB", puertos)
-            if st.button("Conectar"):
-                try:
-                    st.session_state.uno = conectar(puerto)
-                except (serial.SerialException, OSError) as error:
-                    st.error(f"No se pudo abrir {puerto}: {error}")
-                    st.caption("Cerrá el Monitor Serie del Arduino IDE.")
-                else:
-                    st.session_state.buffer = b""
-                    st.session_state.historial = []
-                    st.session_state.confirmacion = ""
-                    st.session_state.stock = None
-                    st.session_state.aviso_usb = ""
-                    st.rerun()
-        else:
-            st.error("Arduino desconectado. Enchufalo por USB.")
-        st.button("Buscar puertos")
+        st.caption("Enchufá el Uno por USB y cerrá el Monitor Serie. La conexión es automática.")
 
 st.subheader("Gavetas")
 columnas = st.columns(3)
 for i, (ubicacion, producto) in enumerate(GAVETAS.items()):
     with columnas[i % 3]:
-        with st.container(border=True):
-            st.markdown(f"**{ubicacion}**")
-            st.write(producto)
+        st.markdown(
+            f'<div class="sp-card"><div class="sp-code">{ubicacion}</div>{producto}</div>',
+            unsafe_allow_html=True,
+        )
 
 with st.form("pedido", clear_on_submit=True):
     pedido = st.text_input("Producto y cantidad", placeholder="Ej.: tacos 5")
@@ -149,6 +190,10 @@ def mostrar_estado():
         cerrar_placa("Se perdió la conexión USB.")
         st.rerun()
     if placa is None and sorted(puertos_actuales) != sorted(puertos):
+        st.session_state.reintentar_usb = 0.0
+        st.rerun()
+    if (placa is None and candidatos and not st.session_state.pausa_usb
+            and time.monotonic() >= st.session_state.reintentar_usb):
         st.rerun()
     if placa is not None and placa.is_open:
         try:
