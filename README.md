@@ -25,3 +25,9 @@ Al retirar la última unidad, el piezo suena 2 s y el aviso visual dura hasta
 
 Para subir el proyecto a GitHub, extraé el ZIP y subí el contenido de la
 carpeta, manteniendo el árbol `Arduino/SmartPick_Uno/`.
+# Panel visual y exportación
+
+- La LCD virtual y el gabinete muestran el estado del pedido. La gaveta se ilumina en verde cuando el Arduino acepta el pedido y se apaga al confirmar el retiro. El borde rojo distingue stock insuficiente o agotamiento.
+- El archivo Excel es una captura del inventario informado por el Arduino. Exportarlo no guarda ni restaura el saldo de la placa.
+- Para actualizar una instalación existente, copiá juntos `app.py` y `panel_pedido.py`. El sketch no cambia respecto de la versión de tema claro.
+
